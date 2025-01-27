@@ -1,5 +1,6 @@
 <!--MUHAMMAD IKHWAN BIN CHE ROSS-->
 <!--AMTIS-TEST-->
+<!--UPDATE_VERSION-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,20 +35,38 @@
         if (isset($_POST['voltage']) && isset($_POST['current']) && isset($_POST['rate'])) {
             $voltage =$_POST['voltage']; 
             $current =$_POST['current']; 
-            $rate =$_POST['rate'];       
-
-            //penngiraan power
-            $power = $voltage * $current; 
-
-            // tukarkan power kepada kW
-            $powerkw = $power / 1000; 
-
+            $rate =$_POST['rate'];
             
+            function KiraElektrikRate($voltage, $current, $rate){
+            $power = $voltage * $current; //kirapower
+            $powerKW = $power / 1000; // tukarkan power kepada kW
             $rateRM = $rate / 100;
 
+            $hourlyData = [];
+
+            for ($counter = 1, $hour = 1; $hour <= 24; $hour++, $counter++) {
+                $energy = $powerKW * $hour;
+                $totalCharge = $energy * $rateRM;
+                $hourlyData[] = [
+                    'counter' => $counter,
+                    'hour' => $hour,
+                    'energy' => $energy,
+                    'Charge' => $totalCharge
+                ];
+            }
+
+            return [
+                'hourlyData' => $hourlyData,
+                'powerKW' => $powerKW,
+                'rateRM' => $rateRM,
+            ];
+        }
+
+        $result = KiraElektrikRate($voltage, $current, $rate);
+
             echo "<div class='container' style='text-align: center;'>";
-            echo "<h3>POWER: " . number_format($powerkw,5 ) . " kW</h3>";
-            echo "<h3>RATE: RM " . number_format($rateRM, 3) . " per kWh</h3></div>";
+            echo "<h3>POWER: " . number_format($result['powerKW'],5 ) . " kW</h3>";
+            echo "<h3>RATE: RM " . number_format($result['rateRM'], 3) . " per kWh</h3></div>";
 
             echo "<table class='table table-bordered'>
                     <thead>
@@ -61,20 +80,16 @@
                     <tbody>";
 
             
-            for ($counter = 1, $hour = 1; $hour <= 24; $hour++, $counter++) {
-                // utk dpatkan total energy setiap hour (kWh)
-                $energy = $powerkw * $hour; 
-                // utk dpatkan total rate setiap hour (RM/kWh)
-                $total = $energy * $rateRM; 
-                echo "<tr>
-                        <td>$counter</td>
-                        <td>$hour</td>
-                        <td>" . number_format($energy, 5) . "</td>
-                        <td>" . number_format($total, 2) . "</td>
-                    </tr>";
-            }
+                    foreach ($result['hourlyData'] as $data) {
+                        echo "<tr>
+                                <td>{$data['counter']}</td>
+                                <td>{$data['hour']}</td>
+                                <td>" . number_format($data['energy'], 5) . "</td>
+                                <td>RM " . number_format($data['Charge'], 2) . "</td>
+                              </tr>";
+                    }
+                    echo "</tbody></table>"; 
 
-            echo "</tbody></table>"; 
         }
         ?>
 </body>
